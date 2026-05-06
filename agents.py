@@ -4,14 +4,14 @@ Defines three specialized agents: Product, Policy, and Tech Support
 """
 import os
 from typing import List, Dict, Any
-from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+from langchain_community.chat_models import ChatGooglePalm, ChatOpenAI
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
 from vector_store import VectorStoreManager
 from tools import get_tools
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -30,10 +30,17 @@ class RAGAgent:
         self.vector_store = vector_store
         self.tools = tools or []
 
-        self.llm = ChatOpenAI(
-            model=model_name or os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-            temperature=0.7
-        )
+        if os.getenv("GOOGLE_API_KEY"):
+            self.llm = ChatGooglePalm(
+                model_name=model_name or os.getenv("GOOGLE_MODEL", "models/chat-bison-001"),
+                temperature=0.7,
+                google_api_key=os.getenv("GOOGLE_API_KEY"),
+            )
+        else:
+            self.llm = ChatOpenAI(
+                model=model_name or os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                temperature=0.7,
+            )
 
         self.prompt = self._create_prompt()
         self.agent = create_openai_tools_agent(self.llm, self.tools, self.prompt)

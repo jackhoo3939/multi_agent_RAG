@@ -4,11 +4,11 @@ Routes user queries to appropriate specialized agents
 """
 import os
 from typing import TypedDict, Annotated, Literal
-from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+from langchain_community.chat_models import ChatGooglePalm, ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
 from agents import AgentManager
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -26,10 +26,17 @@ class QueryRouter:
     """Routes queries to appropriate agents using LangGraph"""
 
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-            temperature=0
-        )
+        if os.getenv("GOOGLE_API_KEY"):
+            self.llm = ChatGooglePalm(
+                model_name=os.getenv("GOOGLE_MODEL", "models/chat-bison-001"),
+                temperature=0,
+                google_api_key=os.getenv("GOOGLE_API_KEY"),
+            )
+        else:
+            self.llm = ChatOpenAI(
+                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                temperature=0,
+            )
         self.agent_manager = AgentManager()
         self.graph = self._build_graph()
 

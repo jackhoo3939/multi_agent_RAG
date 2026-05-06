@@ -14,8 +14,12 @@ services:
       - key: GOOGLE_API_KEY
         sync: false
       - key: OPENAI_MODEL
-        value: gpt-4o-mini
+        value: gpt-3.5-turbo
+      - key: GOOGLE_MODEL
+        value: models/chat-bison-001
       - key: EMBEDDING_MODEL
         value: text-embedding-3-small
+      - key: GOOGLE_EMBEDDING_MODEL
+        value: models/embedding-gecko-001
       - key: PYTHON_VERSION
         value: 3.11.0

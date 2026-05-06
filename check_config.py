@@ -24,8 +24,9 @@ def check_env_file():
         print("✓ .env file exists")
         return True
     else:
-        print("✗ .env file not found")
-        print("  → Run: cp .env.example .env")
+        print("⚠ .env file not found")
+        print("  → If you are using GitHub secrets or environment variables, this is okay")
+        print("  → Otherwise run: cp .env.example .env")
         return False
 
 
@@ -40,15 +41,21 @@ def check_api_keys():
         "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
     }
 
-    has_required = False
+    has_required = bool(keys["OPENAI_API_KEY"] or keys["GOOGLE_API_KEY"])
+
     for key, value in keys.items():
         if value and value != f"your_{key.lower()}_here":
-            if key == "OPENAI_API_KEY":
-                has_required = True
             print(f"✓ {key} is set")
         else:
-            status = "✗" if key == "OPENAI_API_KEY" else "⚠"
-            print(f"{status} {key} not set {'(Required!)' if key == 'OPENAI_API_KEY' else '(Optional)'}")
+            if key == "OPENAI_API_KEY":
+                print("⚠ OPENAI_API_KEY not set (Optional if GOOGLE_API_KEY is provided)")
+            elif key == "GOOGLE_API_KEY":
+                print("⚠ GOOGLE_API_KEY not set (Optional if OPENAI_API_KEY is provided)")
+            else:
+                print(f"⚠ {key} not set (Optional)")
+
+    if not has_required:
+        print("✗ No valid OpenAI or Google API key found. Set either OPENAI_API_KEY or GOOGLE_API_KEY.")
 
     return has_required
 
@@ -155,7 +162,7 @@ def main():
     print("Summary")
     print("=" * 60)
 
-    critical_checks = ["Python Version", "Environment File", "API Keys", "Dependencies"]
+    critical_checks = ["Python Version", "API Keys", "Dependencies"]
     critical_passed = all(results.get(check, False) for check in critical_checks)
 
     if critical_passed:
@@ -165,7 +172,7 @@ def main():
         print("❌ Some critical checks failed.")
         print("\n📝 Please fix the issues above before running the application.")
 
-    optional_checks = ["Model File", "Vector Store"]
+    optional_checks = ["Environment File", "Model File", "Vector Store"]
     optional_passed = all(results.get(check, False) for check in optional_checks)
 
     if not optional_passed:

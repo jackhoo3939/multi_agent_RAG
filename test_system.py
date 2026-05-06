@@ -11,15 +11,19 @@ load_dotenv()
 def test_environment():
     """Test environment variables"""
     print("\n=== Testing Environment Variables ===")
-    required_vars = ["OPENAI_API_KEY"]
-    optional_vars = ["GROQ_API_KEY", "GOOGLE_API_KEY", "OPENAI_MODEL"]
+    required_vars = ["OPENAI_API_KEY", "GOOGLE_API_KEY"]
+    optional_vars = ["GROQ_API_KEY", "OPENAI_MODEL", "GOOGLE_MODEL"]
 
-    for var in required_vars:
-        value = os.getenv(var)
-        if value:
-            print(f"✓ {var}: {'*' * 10}{value[-4:]}")
-        else:
-            print(f"✗ {var}: NOT SET (Required!)")
+    required_set = bool(os.getenv("OPENAI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
+    if required_set:
+        for var in required_vars:
+            value = os.getenv(var)
+            if value:
+                print(f"✓ {var}: {'*' * 10}{value[-4:]}")
+            else:
+                print(f"⚠ {var}: Not set")
+    else:
+        print("✗ No valid OpenAI or Google API key found. Set either OPENAI_API_KEY or GOOGLE_API_KEY.")
 
     for var in optional_vars:
         value = os.getenv(var)

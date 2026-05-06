@@ -9,9 +9,9 @@ import chromadb
 from chromadb.config import Settings
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
 from dotenv import load_dotenv
+from langchain_community.embeddings.google_palm import GooglePalmEmbeddings
+from langchain_community.vectorstores import Chroma
 
 # Load environment variables
 load_dotenv()
@@ -21,9 +21,17 @@ class VectorStoreManager:
 
     def __init__(self, persist_directory: str = "./chroma_db"):
         self.persist_directory = persist_directory
-        self.embeddings = OpenAIEmbeddings(
-            model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-        )
+        if os.getenv("GOOGLE_API_KEY"):
+            self.embeddings = GooglePalmEmbeddings(
+                model_name=os.getenv("GOOGLE_EMBEDDING_MODEL", "models/embedding-gecko-001"),
+                google_api_key=os.getenv("GOOGLE_API_KEY"),
+            )
+        else:
+            from langchain_community.embeddings import OpenAIEmbeddings
+
+            self.embeddings = OpenAIEmbeddings(
+                model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+            )
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -47,6 +55,15 @@ class VectorStoreManager:
             documents=documents,
             embedding=self.embeddings,
             collection_name=collection_name,
+            persist_directory=self.persist_directory
+        )
+        return vector_store
+
+    def get_vector_store(self, collection_name: str) -> Chroma:
+        """Get existing vector store"""
+        return Chroma(
+            collection_name=collection_name,
+            embedding_function=self.embeddings,
             persist_directory=self.persist_directory
         )
 
@@ -82,13 +99,3 @@ def setup_vector_stores():
 
 if __name__ == "__main__":
     setup_vector_stores()
-
-        return vector_store
-
-    def get_vector_store(self, collection_name: str) -> Chroma:
-        """Get existing vector store"""
-        return Chroma(
-            collection_name=collection_name,
-            embedding_function=self.embeddings,
-            persist_directory=self.persist_directory
-        )
